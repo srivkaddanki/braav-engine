@@ -1,0 +1,32 @@
+def toggle(self):
+        """The Master Switch"""
+        if self.expanded:
+            self.set_state_seed()
+        else:
+            self.set_state_bloom()
+        self.expanded = not self.expanded
+
+    def set_state_seed(self):
+        """State: Just the Puppy"""
+        self.bloom_frame.pack_forget()
+        # Ensure the logo is visible and the window is tiny
+        self.seed.pack()
+        self.root.geometry("70x70") 
+
+    def set_state_bloom(self):
+        """State: The Puppy + The Editor"""
+        # We keep the seed visible at the top so you can click it to close
+        self.seed.pack(side="top", pady=(0, 5)) 
+        self.bloom_frame.pack(padx=10, pady=5)
+        self.refresh_chips()
+        self.root.geometry("450x200") # Slightly taller to fit the logo + editor
+        self.entry.focus_set()
+
+    def process(self):
+        """Sending the thought"""
+        text = self.entry.get().strip()
+        if text:
+            supabase.table("thoughts").insert({"content": text}).execute()
+            self.entry.delete(0, tk.END)
+            # Optional: Remove the toggle() here if you want it to stay open after sending
+            self.toggle()

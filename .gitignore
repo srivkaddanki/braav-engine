@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+logs/
+*.egg-info/
+.coverage
+
+# Node (Frontend)
+node_modules/
+dist/
+npm-debug.log
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/

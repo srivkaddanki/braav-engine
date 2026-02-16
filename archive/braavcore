@@ -1,0 +1,57 @@
+import sqlite3
+from google import genai
+import json
+import re
+
+# ==========================================
+# 1. THE CONNECTION (SYNCED WITH APP.PY)
+# ==========================================
+API_KEY = "AIzaSyDWm5gO_ndphiCalLRY67sZKbFkfiydtAI"
+client = genai.Client(api_key=API_KEY)
+DB_NAME = "braav_ledger.db"
+
+def execute_db(query, params=()):
+    """The only function allowed to touch the disk."""
+    with sqlite3.connect(DB_NAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        conn.commit()
+        return cursor.fetchall()
+
+# ==========================================
+# 2. THE CORE ARCHITECT
+# ==========================================
+def librarian_architect(user_input):
+    """The logic that connects Gemini's reasoning to SQL reality."""
+    # Check existing tables so Gemini doesn't double-up
+    existing_tables = execute_db("SELECT name FROM sqlite_master WHERE type='table';")
+    tables_list = [t[0] for t in existing_tables if t[0] != 'sqlite_sequence']
+    
+    prompt = f"""
+    You are B'Raav, the Autonomous Librarian. 
+    User input: "{user_input}"
+    Existing Buckets: {tables_list}
+    
+    TASK:
+    1. Determine the best table for this data.
+    2. If no table fits, create a new one with a logical schema.
+    3. Return ONLY a JSON object.
+    
+    SCHEMA:
+    {{
+        "explanation": "Why you chose this",
+        "new_table_sql": "CREATE TABLE IF NOT EXISTS...",
+        "insert_sql": "INSERT INTO table_name (cols) VALUES (?, ?, ...)",
+        "params": ["value1", "value2"]
+    }}
+    """
+    
+    # 2026 SDK CALL
+    response = client.models.generate_content(
+        model="gemini-1.5-flash-8b",
+        contents=prompt
+    )
+    
+    # Clean and parse
+    clean_json = re.search(r'\{.*\}', response.text, re.DOTALL).group()
+    return json.loads(clean_json)

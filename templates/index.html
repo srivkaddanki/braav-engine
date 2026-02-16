@@ -1,0 +1,39 @@
+async function getVibe(color) {
+    // 1. Change Background
+    const colorCircle = document.getElementById(color);
+    document.body.style.background = colorCircle.style.backgroundColor;
+
+    // 2. Clear previous audio if it exists
+    if (window.currentAudio) {
+        window.currentAudio.pause();
+        window.currentAudio.currentTime = 0;
+    }
+
+    // 3. Ask Python for the song
+    try {
+        const res = await fetch(`/get_vibe?color=${color}`);
+        const songs = await res.json();
+        const song = songs[0];
+
+        // 4. Update the UI
+        const div = document.getElementById('playlist');
+        div.innerHTML = `
+            <div class="song-card">
+                <h3>${song.title}</h3>
+                <p>${song.artist}</p>
+                <button onclick="playLocal()">PLAY SONG</button>
+            </div>
+        `;
+
+        // 5. Create new Audio object
+        window.currentAudio = new Audio(song.file_url);
+    } catch (err) {
+        console.error("The 'Vibe Pipe' is broken:", err);
+    }
+}
+
+function playLocal() {
+    if (window.currentAudio) {
+        window.currentAudio.play();
+    }
+}
